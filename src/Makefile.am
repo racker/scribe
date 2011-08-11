@@ -35,6 +35,7 @@ all:
 THRIFT = $(thrift_home)/bin/thrift
 THRIFT_INCLUDES = -I $(fb303_home)/share/
 THRIFT_OPTS = $(THRIFT_INCLUDES) --gen cpp:pure_enums --gen py --gen php --gen java
+JAVA_HOME = /usr/lib/jvm/java-6-sun
 
 # User defined conditionals and conditonal statements set up in configure.ac.
 # FACEBOOK set in configure.ac
@@ -52,7 +53,7 @@ endif
 
 
 # Set libraries external to this component.
-EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -L$(hadoop_home)/lib -lfb303 -lthrift -lthriftnb
+EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -L$(hadoop_home)/lib -L$(JAVA_HOME)/jre/lib/amd64/server -lfb303 -lthrift -lthriftnb
 EXTERNAL_LIBS += -levent -lpthread
 if USE_SCRIBE_HDFS
   EXTERNAL_LIBS += -lhdfs -ljvm
@@ -69,6 +70,9 @@ AM_CPPFLAGS += -I$(thrift_home)/include/thrift
 AM_CPPFLAGS += -I$(fb303_home)/include/thrift
 AM_CPPFLAGS += -I$(fb303_home)/include/thrift/fb303
 AM_CPPFLAGS += -I$(hadoop_home)/include
+AM_CPPFLAGS += -I$(JAVA_HOME)/include
+AM_CPPFLAGS += -I$(JAVA_HOME)/include/linux
+AM_CPPFLAGS += -I
 AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 
