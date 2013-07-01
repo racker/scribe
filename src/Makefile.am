@@ -53,7 +53,7 @@ endif
 
 
 # Set libraries external to this component.
-EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -L$(hadoop_home)/lib -L$(JAVA_HOME)/jre/lib/amd64/server -lfb303 -lthrift -lthriftnb
+EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -L$(hadoop_home)/lib -L$(JAVA_HOME)/jre/lib/amd64/server -lfb303 -lthrift -lthriftz -lthriftnb
 EXTERNAL_LIBS += -levent -lpthread
 if USE_SCRIBE_HDFS
   EXTERNAL_LIBS += -lhdfs -ljvm
@@ -77,6 +77,7 @@ AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
+CXXFLAGS    += -DHAVE_NETINET_IN_H -DHAVE_INTTYPES_H
 
 # Section 3 #############################################################################
 # GENERATE BUILD RULES

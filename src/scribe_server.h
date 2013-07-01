@@ -51,6 +51,9 @@ class scribeHandler : virtual public scribe::thrift::scribeIf,
 
   unsigned long int port; // it's long because that's all I implemented in the conf class
 
+  //whether to use TZlibTransport on incoming Thrift connections
+  bool useServerThriftCompression;
+
   // number of threads processing new Thrift connections
   size_t numThriftServerThreads;
 

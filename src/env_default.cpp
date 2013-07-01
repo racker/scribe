@@ -115,15 +115,40 @@ void scribe::startServer() {
     thread_manager->start();
   }
 
-  shared_ptr<TNonblockingServer> server(new TNonblockingServer(
-                                          processor,
-                                          protocol_factory,
-                                          g_Handler->port,
-                                          thread_manager
-                                        ));
+  //this factory creates transports to handle thrift compression
+  boost::shared_ptr<TTransportFactory> zlib_transport_factory;
+
+  boost::shared_ptr<TNonblockingServer> server;
+
+  if (g_Handler->useServerThriftCompression) {
+    zlib_transport_factory =
+      boost::shared_ptr<TTransportFactory>(new TZlibTransportFactory());
+    //use the TZlib transport for both read and writes
+    server = 
+      boost::shared_ptr<TNonblockingServer>(new TNonblockingServer(
+                                    processor,
+                                    zlib_transport_factory,
+                                    zlib_transport_factory,
+                                    protocol_factory,
+                                    protocol_factory,
+                                    g_Handler->port,
+                                    thread_manager
+                                  ));
+  } else {
+    server = 
+      boost::shared_ptr<TNonblockingServer>(new TNonblockingServer(
+                                    processor,
+                                    protocol_factory,
+                                    g_Handler->port,
+                                    thread_manager
+                                  ));
+  }
+
   g_Handler->setServer(server);
 
-  LOG_OPER("Starting scribe server on port %lu", g_Handler->port);
+  LOG_OPER("Starting scribe server on port %lu, compression is %s", 
+            g_Handler->port,
+            (g_Handler->useServerThriftCompression ? "enabled" : "disabled"));
   fflush(stderr);
 
   // throttle concurrent connections

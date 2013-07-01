@@ -1742,6 +1742,7 @@ NetworkStore::NetworkStore(StoreQueue* storeq,
     useConnPool(false),
     serviceBased(false),
     remotePort(0),
+    useThriftCompression(false),
     serviceCacheTimeout(DEFAULT_NETWORKSTORE_CACHE_TIMEOUT),
     ignoreNetworkError(false),
     configmod(NULL),
@@ -1760,6 +1761,7 @@ NetworkStore::~NetworkStore() {
 
 void NetworkStore::configure(pStoreConf configuration, pStoreConf parent) {
   Store::configure(configuration, parent);
+  string temp;
   // Error checking is done on open()
   // service takes precedence over host + port
   if (configuration->getString("smc_service", serviceName)) {
@@ -1772,23 +1774,31 @@ void NetworkStore::configure(pStoreConf configuration, pStoreConf parent) {
     serviceBased = false;
     configuration->getString("remote_host", remoteHost);
     configuration->getUnsigned("remote_port", remotePort);
+
+    configuration->getString("remote_thrift_compression", temp);
+    if (0 == temp.compare("on")) {
+      useThriftCompression = true;
+    } else {
+      useThriftCompression = false;
+    }
   }
 
   if (!configuration->getInt("timeout", timeout)) {
     timeout = DEFAULT_SOCKET_TIMEOUT_MS;
   }
 
-  string temp;
   if (configuration->getString("use_conn_pool", temp)) {
     if (0 == temp.compare("yes")) {
       useConnPool = true;
     }
   }
+
   if (configuration->getString("ignore_network_error", temp)) {
     if (0 == temp.compare("yes")) {
       ignoreNetworkError = true;
     }
   }
+
 
   // if this network store dynamic configured?
   // get network dynamic updater parameters
@@ -1865,14 +1875,15 @@ bool NetworkStore::open() {
     }
 
     if (useConnPool) {
-      opened = g_connPool.open(serviceName, servers, static_cast<int>(timeout));
+      opened = g_connPool.open(serviceName,
+                  servers, static_cast<int>(timeout), useThriftCompression);
     } else {
       if (unpooledConn != NULL) {
         LOG_OPER("Logic error: NetworkStore::open unpooledConn is not NULL"
             " service = %s", serviceName.c_str());
       }
       unpooledConn = shared_ptr<scribeConn>(new scribeConn(serviceName,
-            servers, static_cast<int>(timeout)));
+            servers, static_cast<int>(timeout), useThriftCompression));
       opened = unpooledConn->open();
       if (!opened) {
         unpooledConn.reset();
@@ -1887,7 +1898,7 @@ bool NetworkStore::open() {
   } else {
     if (useConnPool) {
       opened = g_connPool.open(remoteHost, remotePort,
-          static_cast<int>(timeout));
+          static_cast<int>(timeout), useThriftCompression);
     } else {
       // only open unpooled connection if not already open
       if (unpooledConn != NULL) {
@@ -1895,7 +1906,7 @@ bool NetworkStore::open() {
             " %s:%lu", remoteHost.c_str(), remotePort);
       }
       unpooledConn = shared_ptr<scribeConn>(new scribeConn(remoteHost,
-          remotePort, static_cast<int>(timeout)));
+          remotePort, static_cast<int>(timeout), useThriftCompression));
       opened = unpooledConn->open();
       if (!opened) {
         unpooledConn.reset();
@@ -1945,6 +1956,7 @@ shared_ptr<Store> NetworkStore::copy(const std::string &category) {
   store->remoteHost = remoteHost;
   store->remotePort = remotePort;
   store->serviceName = serviceName;
+  store->useThriftCompression = useThriftCompression;
 
   return copied;
 }

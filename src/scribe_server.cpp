@@ -586,6 +586,13 @@ void scribeHandler::initialize() {
       throw runtime_error("No port number configured");
     }
 
+    config.getString("thrift_compression", temp);
+    if (0 == temp.compare("on")) {
+      useServerThriftCompression = true;
+    } else {
+      useServerThriftCompression = false;
+    }
+
     // check if config sets the size to use for the ThreadManager
     unsigned long int num_threads;
     if (config.getUnsigned("num_thrift_server_threads", num_threads)) {
