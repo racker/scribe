@@ -95,11 +95,14 @@ endif
 # Shared -- multiple libraries can be defined
 if SHARED
 shareddir = $(prefix)/lib
-shared_PROGRAMS = libscribe.so
+shared_PROGRAMS = libscribe.so libdynamicbucketupdater.so
 libscribe_so_SOURCES = gen-cpp/scribe.cpp gen-cpp/scribe_types.cpp
+libdynamicbucketupdater_so_SOURCES = gen-cpp/BucketStoreMapping.cpp gen-cpp/bucketupdater_constants.cpp gen-cpp/bucketupdater_types.cpp 
 libscribe_so_CXXFLAGS = $(SHARED_CXXFLAGS)
+libdynamicbucketupdater_so_CXXFLAGS = $(SHARED_CXXFLAGS)
 libscribe_so_LDFLAGS = $(SHARED_LDFLAGS)
-INTERNAL_LIBS =  libscribe.so
+libdynamicbucketupdater_so_LDFLAGS = $(SHARED_LDFLAGS)
+INTERNAL_LIBS =  libscribe.so libdynamicbucketupdater.so
 endif
 
 # Binaries -- multiple progs can be defined.
@@ -111,7 +114,7 @@ endif
 scribed_LDADD = $(EXTERNAL_LIBS) $(INTERNAL_LIBS)
 
 if SHARED
-scribed_DEPENDENCIES = libscribe.so
+scribed_DEPENDENCIES = libscribe.so libdynamicbucketupdater.so
 endif
 
 # Section 4 ##############################################################################
