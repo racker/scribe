@@ -32,8 +32,8 @@
 // Basic scribe class to manage network connections. Used by network store
 class scribeConn {
  public:
-  scribeConn(const std::string& host, unsigned long port, int timeout);
-  scribeConn(const std::string &service, const server_vector_t &servers, int timeout);
+  scribeConn(const std::string& host, unsigned long port, int timeout, bool useCompression);
+  scribeConn(const std::string &service, const server_vector_t &servers, int timeout, bool useCompresseion);
   virtual ~scribeConn();
 
   void addRef();
@@ -66,6 +66,7 @@ class scribeConn {
   std::string remoteHost;
   unsigned long remotePort;
   int timeout; // connection, send, and recv timeout
+  bool useThriftCompression;
   pthread_mutex_t mutex;
 };
 
@@ -82,8 +83,8 @@ class ConnPool {
   ConnPool();
   virtual ~ConnPool();
 
-  bool open(const std::string& host, unsigned long port, int timeout);
-  bool open(const std::string &service, const server_vector_t &servers, int timeout);
+  bool open(const std::string& host, unsigned long port, int timeout, bool useCompression);
+  bool open(const std::string &service, const server_vector_t &servers, int timeout, bool useCompression);
 
   void close(const std::string& host, unsigned long port);
   void close(const std::string &service);

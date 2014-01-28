@@ -397,13 +397,13 @@ class NetworkStore : public Store {
   long int timeout;
   std::string remoteHost;
   unsigned long remotePort; // long because it works with config code
+  bool useThriftCompression;
   std::string serviceName;
   std::string serviceList;
   unsigned long serviceListDefaultPort;
   std::string serviceOptions;
   server_vector_t servers;
   unsigned long serviceCacheTimeout;
-  time_t lastServiceCheck;
   // if true do not update status to reflect failure to connect
   bool ignoreNetworkError;
   NetworkDynamicConfigMod* configmod;
@@ -411,6 +411,7 @@ class NetworkStore : public Store {
   // state
   bool opened;
   boost::shared_ptr<scribeConn> unpooledConn; // null if useConnPool
+  time_t lastServiceCheck;
 
  private:
   // disallow copy, assignment, and empty construction

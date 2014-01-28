@@ -54,14 +54,14 @@ string ConnPool::makeKey(const string& hostname, unsigned long port) {
   return key;
 }
 
-bool ConnPool::open(const string& hostname, unsigned long port, int timeout) {
+bool ConnPool::open(const string& hostname, unsigned long port, int timeout, bool useCompression) {
         return openCommon(makeKey(hostname, port),
-                    shared_ptr<scribeConn>(new scribeConn(hostname, port, timeout)));
+                    shared_ptr<scribeConn>(new scribeConn(hostname, port, timeout, useCompression)));
 }
 
-bool ConnPool::open(const string &service, const server_vector_t &servers, int timeout) {
+bool ConnPool::open(const string &service, const server_vector_t &servers, int timeout, bool useCompression) {
         return openCommon(service,
-                    shared_ptr<scribeConn>(new scribeConn(service, servers, timeout)));
+                    shared_ptr<scribeConn>(new scribeConn(service, servers, timeout, useCompression)));
 }
 
 void ConnPool::close(const string& hostname, unsigned long port) {
@@ -158,21 +158,23 @@ int ConnPool::sendCommon(const string &key,
   }
 }
 
-scribeConn::scribeConn(const string& hostname, unsigned long port, int timeout_)
+scribeConn::scribeConn(const string& hostname, unsigned long port, int timeout_, bool useCompression)
   : refCount(1),
   serviceBased(false),
   remoteHost(hostname),
   remotePort(port),
-  timeout(timeout_) {
+  timeout(timeout_),
+  useThriftCompression(useCompression) {
   pthread_mutex_init(&mutex, NULL);
 }
 
-scribeConn::scribeConn(const string& service, const server_vector_t &servers, int timeout_)
+scribeConn::scribeConn(const string& service, const server_vector_t &servers, int timeout_, bool useCompression)
   : refCount(1),
   serviceBased(true),
   serviceName(service),
   serverList(servers),
-  timeout(timeout_) {
+  timeout(timeout_),
+  useThriftCompression(useCompression) {
   pthread_mutex_init(&mutex, NULL);
 }
 
@@ -238,7 +240,23 @@ bool scribeConn::open() {
     if (!framedTransport) {
       throw std::runtime_error("Failed to create framed transport");
     }
-    protocol = shared_ptr<TBinaryProtocol>(new TBinaryProtocol(framedTransport));
+
+    shared_ptr<TTransport> zlibTransport;
+
+    //if using thrift compression, insert the TZlib transport between the
+    //framedTransport and the BinaryProtocol.
+    if (useThriftCompression) {
+      zlibTransport = shared_ptr<TZlibTransport>(new TZlibTransport(framedTransport));
+
+      if (!zlibTransport) {
+        throw std::runtime_error("Failed to create zlib transport");
+      }
+
+      protocol = shared_ptr<TBinaryProtocol>(new TBinaryProtocol(zlibTransport));
+    } else {
+      protocol = shared_ptr<TBinaryProtocol>(new TBinaryProtocol(framedTransport));
+    }
+
     if (!protocol) {
       throw std::runtime_error("Failed to create protocol");
     }
@@ -261,8 +279,9 @@ bool scribeConn::open() {
              connectionString().c_str(), stx.what());
     return false;
   }
-  LOG_OPER("Opened connection to remote scribe server %s",
-           connectionString().c_str());
+  LOG_OPER("Opened connection to remote scribe server %s, compression %s",
+            connectionString().c_str(), 
+            useThriftCompression ? "enabled" : "disabled");
   return true;
 }
 

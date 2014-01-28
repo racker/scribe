@@ -33,6 +33,7 @@
 #include "thrift/transport/TFileTransport.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TSimpleFileTransport.h"
+#include "thrift/transport/TZlibTransport.h"
 
 #include "fb303/FacebookBase.h"
 
